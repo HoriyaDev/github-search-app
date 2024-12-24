@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query"; // Import keepPreviousData
 import axios from "axios";
 
 const fetchUsers = async (query, page) => {
@@ -12,8 +12,8 @@ const fetchUsers = async (query, page) => {
       },
     }
   );
-  console.log(response.data.items)
-  return response.data; 
+  console.log(response.data.items);
+  return response.data;
 };
 
 const App = () => {
@@ -21,19 +21,18 @@ const App = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
 
-  
   const { data, isLoading, error } = useQuery({
     queryKey: ["searchUsers", searchQuery, page],
     queryFn: () => fetchUsers(searchQuery, page),
-    keepPreviousData: true,
-    enabled: !!searchQuery, 
+    placeholderData: keepPreviousData, 
+    enabled: !!searchQuery,
   });
 
   const handleSearch = () => {
     if (query.trim()) {
       setSearchQuery(query);
-      setPage(1); 
-      setQuery(""); 
+      setPage(1);
+      setQuery("");
     }
   };
 
@@ -47,7 +46,7 @@ const App = () => {
 
   const getTotalPages = () => {
     if (data && data.total_count) {
-      return Math.ceil(data.total_count / 6); 
+      return Math.ceil(data.total_count / 6);
     }
     return 1;
   };
