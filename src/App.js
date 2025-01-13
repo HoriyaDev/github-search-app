@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { MdOutlineLightMode } from "react-icons/md";
-import { MdDarkMode } from "react-icons/md";
+import { MdOutlineLightMode, MdDarkMode } from "react-icons/md";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { ClipLoader } from 'react-spinners';
@@ -31,7 +30,6 @@ const fetchUserDetails = async (username) => {
       },
     }
   );
-  console.log(response.data)
   return response.data;
 };
 
@@ -42,6 +40,7 @@ const App = () => {
   const [page, setPage] = useState(1);
   const [profileModel, setProfileModel] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [searchAttempted, setSearchAttempted] = useState(false); 
 
   // Query to search for users
   const { data, isLoading, error } = useQuery({
@@ -56,7 +55,6 @@ const App = () => {
     queryFn: () => selectedUser && fetchUserDetails(selectedUser.login),
     enabled: !!selectedUser,  // Only fetch user details if a user is selected
   });
-  
 
   const handleProfileModel = (user) => {
     setSelectedUser(user);
@@ -73,6 +71,7 @@ const App = () => {
       setSearchQuery(query);
       setPage(1);
       setQuery("");
+      setSearchAttempted(true);
     }
   };
 
@@ -120,56 +119,52 @@ const App = () => {
             >
               Search
             </button>
-            
           </div>
         </div>
 
-        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 mt-5">
-          {isLoading && (
-            <div className="flex justify-center items-center h-screen absolute top-0 left-0 right-0 bottom-60 bg-slate-200 dark:bg-slate-700 opacity-70">
-              <ClipLoader size={80} color={dark ? "#ffffff" : "#000000"} />
-            </div>
-          )}
+        <div className="overflow-auto max-h-screen">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 mt-5">
+            {isLoading && (
+              <div className="flex justify-center items-center h-screen absolute top-0 left-0 right-0 bottom-60 bg-slate-200 dark:bg-slate-700 opacity-70">
+                <ClipLoader size={80} color={dark ? "#ffffff" : "#000000"} />
+              </div>
+            )}
 
-          {error && (
-            <div className="flex justify-center items-center h-screen absolute top-0 left-0 right-0 bottom-0">
-              <p className="text-black dark:text-white text-xl">Error: {error.message}</p>
-            </div>
-          )}
+            {error && (
+              <div className="flex justify-center items-center h-screen absolute top-0 left-0 right-0 bottom-0">
+                <p className="text-black dark:text-white text-xl">Error: {error.message}</p>
+              </div>
+            )}
 
-          {data && data.items && data.items.length > 0 ? (
-            data.items.map((user) => (
-              <li
-                key={user.id}
-                className="bg-red-200 mb-4 flex p-4 rounded-lg w-full max-w-xs mx-auto border border-orange-100"
-              >
-                <img
-                  src={user.avatar_url}
-                  alt={user.login}
-                  className="w-20 h-20 rounded"
-                />
-                <div className="flex flex-col ml-5">
-                  <p className="font-semibold text-2xl">{user.login}</p>
-                  <a href={user.html_url} target="_blank" rel="noreferrer">
-                    <button className="bg-red-100 px-2 py-1 rounded hover:bg-red-300 mt-1">
-                      View Profile
-                    </button>
-                  </a>
-                </div>
-                <div>
-                  <button onClick={() => handleProfileModel(user)}>Add more</button>
-                </div>
-              </li>
-            ))
-          ) : (
-            <p className="mx-auto text-xl font-semibold text-black dark:text-white">
-              No users found
-            </p>
-          )}
-        </ul>
+            {!isLoading && data && data.items && data.items.length > 0 ? (
+              data.items.map((user) => (
+                <li
+                  key={user.id}
+                  className="bg-red-200 mb-4 flex p-4 rounded-lg w-full max-w-xs mx-auto border border-orange-100"
+                >
+                  <img
+                    src={user.avatar_url}
+                    alt={user.login}
+                    className="w-20 h-20 rounded"
+                  />
+                  <div className="flex flex-col ml-5">
+                    <p className="font-semibold text-2xl">{user.login}</p>
+                    <div>
+                      <button className="bg-red-100 px-2 py-1 rounded hover:bg-red-300 mt-3" onClick={() => handleProfileModel(user)}>View more</button>
+                    </div>
+                  </div>
+                </li>
+              ))
+            ) : (
+              searchAttempted && !isLoading && (
+                <p className="ml-12 text-xl font-semibold text-black dark:text-white">No data available.</p>
+              )
+            )}
+          </ul>
+        </div>
 
         {data && data.items && data.items.length > 0 ? (
-          <div className="flex justify-between mt-5">
+          <div className="flex justify-between mt-5 mx-14">
             <button
               disabled={page === 1}
               className="bg-blue-200 text-black px-3 py-2 rounded-sm hover:bg-blue-300 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-600 transition-colors duration-200"
@@ -184,7 +179,7 @@ const App = () => {
 
             <button
               disabled={page === getTotalPages()}
-              className="bg-blue-200 text-black px-3 py-2 rounded-sm hover:bg-blue-300 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-600 transition-colors duration-200"
+              className="bg-blue-200 text-black px-5 py-2 rounded-sm hover:bg-blue-300 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-600 transition-colors duration-200"
               onClick={handleNext}
             >
               Next
